@@ -167,6 +167,9 @@ fn check_goal(
     level_selection: ResMut<LevelSelection>,
     players: Query<&GridCoords, (With<Player>, Changed<GridCoords>)>,
     goals: Query<&GridCoords, With<Goal>>,
+    mut ew_start_scenario: MessageWriter<EventStartScenario>,
+    scenario: Res<ScenarioHandle>,
+    rpy_assets: Res<Assets<Rpy>>,
 ) {
     if players
         .iter()
@@ -178,7 +181,9 @@ fn check_goal(
             _ => panic!("level selection should always be Indices in this game"),
         };
 
-        println!("player reached teleport");
+        if let Some(rpy) = rpy_assets.get(scenario.id()) {
+            ew_start_scenario.write(EventStartScenario { ast: rpy.0.clone() });
+        }
 
         indices.level += 1;
     }
