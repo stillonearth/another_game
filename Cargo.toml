@@ -1,0 +1,11 @@
+[package]
+name = "another_game"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+bevy = { version = "0.17" }
+bevy_ecs_ldtk = { version = "0.13"}
+bevy_novel = "0.17.1"
+bevy_kira_audio = { version = "0.24", features = ["ogg", "mp3", "wav"] }
