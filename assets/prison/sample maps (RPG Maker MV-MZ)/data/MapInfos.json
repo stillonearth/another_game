@@ -1,0 +1,11 @@
+[
+null,
+{"id":1,"expanded":false,"name":"Wide","order":1,"parentId":0,"scrollX":2069,"scrollY":445.5},
+{"id":2,"expanded":false,"name":"Prison","order":2,"parentId":0,"scrollX":811,"scrollY":650.5},
+{"id":3,"expanded":false,"name":"Prison 2","order":3,"parentId":0,"scrollX":819,"scrollY":453.5},
+{"id":4,"expanded":false,"name":"Office","order":4,"parentId":0,"scrollX":819,"scrollY":453.5},
+{"id":5,"expanded":false,"name":"Boiler Room","order":5,"parentId":0,"scrollX":819,"scrollY":453.5},
+{"id":6,"expanded":false,"name":"Kitchen","order":6,"parentId":0,"scrollX":819,"scrollY":453.5},
+null,
+{"id":8,"expanded":false,"name":"Electric Chair","order":7,"parentId":0,"scrollX":819,"scrollY":453.5}
+]

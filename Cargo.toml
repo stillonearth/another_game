@@ -7,5 +7,6 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 bevy = { version = "0.17" }
 bevy_ecs_ldtk = { version = "0.13"}
-bevy_novel = "0.17.1"
+bevy_novel = { path = "../bevy_novel" }
 bevy_kira_audio = { version = "0.24", features = ["ogg", "mp3", "wav"] }
+bevy-inspector-egui = { git = "https://github.com/jakobhellermann/bevy-inspector-egui.git", rev="2e9f7eb" }  #"0.34.0"

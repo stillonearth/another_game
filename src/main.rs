@@ -1,7 +1,8 @@
 // This example has a tutorial in the bevy_ecs_ldtk book associated with it:
 // <https://trouv.github.io/bevy_ecs_ldtk/latest/tutorials/tile-based-game/index.html>
-use bevy::prelude::*;
+use bevy::{input::common_conditions::input_toggle_active, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
+use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_kira_audio::AudioPlugin;
 use bevy_novel::{messages::EventStartScenario, rpy_asset_loader::Rpy, NovelPlugin};
 use std::collections::HashSet;
@@ -12,11 +13,15 @@ fn main() {
         .add_plugins(LdtkPlugin)
         .add_plugins(AudioPlugin)
         .add_plugins(NovelPlugin {})
+        .add_plugins((
+            EguiPlugin { ..default() },
+            WorldInspectorPlugin::new().run_if(input_toggle_active(false, KeyCode::Escape)),
+        ))
         .add_systems(Startup, setup)
         .insert_resource(LevelSelection::index(0))
         .register_ldtk_entity::<PlayerBundle>("Player")
         .register_ldtk_entity::<GoalBundle>("Goal")
-        .add_systems(Startup, (load_scenario))
+        .add_systems(Startup, load_scenario)
         .add_systems(
             Update,
             (
@@ -167,6 +172,7 @@ fn check_goal(
     level_selection: ResMut<LevelSelection>,
     players: Query<&GridCoords, (With<Player>, Changed<GridCoords>)>,
     goals: Query<&GridCoords, With<Goal>>,
+    mut levels: Query<(&LevelSet, &mut Visibility)>,
     mut ew_start_scenario: MessageWriter<EventStartScenario>,
     scenario: Res<ScenarioHandle>,
     rpy_assets: Res<Assets<Rpy>>,
@@ -185,6 +191,10 @@ fn check_goal(
             ew_start_scenario.write(EventStartScenario { ast: rpy.0.clone() });
         }
 
+        for (_, mut visibility) in levels.iter_mut() {
+            *visibility = Visibility::Hidden;
+        }
+
         indices.level += 1;
     }
 }
@@ -192,16 +202,6 @@ fn check_goal(
 fn load_scenario(mut commands: Commands, asset_server: Res<AssetServer>) {
     let scenario_handle = ScenarioHandle(asset_server.load("script.rpy"));
     commands.insert_resource(scenario_handle);
-}
-
-fn start_visual_novel(
-    mut ew_start_scenario: MessageWriter<EventStartScenario>,
-    scenario: Res<ScenarioHandle>,
-    rpy_assets: Res<Assets<Rpy>>,
-) {
-    if let Some(rpy) = rpy_assets.get(scenario.id()) {
-        ew_start_scenario.write(EventStartScenario { ast: rpy.0.clone() });
-    }
 }
 
 #[derive(Resource, Deref, DerefMut)]
