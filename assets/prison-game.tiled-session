@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "room.tmx",
+    "activeFile": "sk.tmx",
     "expandedProjectPaths": [
         "prison",
         "levels/prison",
@@ -29,6 +29,38 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "Prison_A2_LIGHT.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_A3_DARK.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_A3_DARK_shift.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_A4_DARK.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_A4_DARK_32.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_C_GRUNGE_DARK.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_C_GRUNGE_LIGHT.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Prison_D_GRUNGE_DARK.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "Prison_E_CLEAN_DARK.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 1
@@ -46,11 +78,11 @@
             }
         },
         "sk.tmx": {
-            "scale": 1.81390625,
-            "selectedLayer": 0,
+            "scale": 1.2092708333333333,
+            "selectedLayer": -1,
             "viewCenter": {
-                "x": 480.17917133258675,
-                "y": 392.2473942630717
+                "x": 720.2687569988802,
+                "y": 479.6278749246274
             }
         }
     },
@@ -59,18 +91,35 @@
     "map.tileHeight": 48,
     "map.tileWidth": 48,
     "openFiles": [
-        "room.tmx"
+        "sk.tmx",
+        "Prison_A2_LIGHT.tsx",
+        "Prison_A2_LIGHT.tsx",
+        "Prison_A4_DARK.tsx",
+        "Prison_A4_DARK_32.tsx",
+        "Prison_A4_DARK_32.tsx",
+        "Prison_E_CLEAN_DARK.tsx",
+        "Prison_A3_DARK.tsx",
+        "Prison_A3_DARK.tsx",
+        "Prison_A3_DARK_shift.tsx",
+        "Prison_A3_DARK_shift.tsx",
+        "Prison_C_GRUNGE_LIGHT.tsx",
+        "Prison_C_GRUNGE_DARK.tsx",
+        "Prison_D_GRUNGE_DARK.tsx"
     ],
     "project": "prison-game.tiled-project",
     "recentFiles": [
+        "Prison_D_GRUNGE_DARK.tsx",
+        "Prison_C_GRUNGE_DARK.tsx",
+        "Prison_C_GRUNGE_LIGHT.tsx",
+        "Prison_A3_DARK_shift.tsx",
+        "Prison_A3_DARK.tsx",
         "Prison_E_CLEAN_DARK.tsx",
+        "Prison_A4_DARK_32.tsx",
+        "Prison_A4_DARK.tsx",
+        "Prison_A2_LIGHT.tsx",
         "sk.tmx",
         "room.tmx",
-        "Prison_A2_DARK.tsx",
-        "!$GRUNGE_DARK_Prison_Bus.tsx",
-        "!$CLEAN_DARK_Prison_Bus.tsx",
-        "Prison_E_CLEAN_LIGHT.tsx",
-        "$!CLEAN_DARK_Prison_Gate_Animation.tsx"
+        "Prison_A2_DARK.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.margin": 0,
