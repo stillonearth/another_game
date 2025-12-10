@@ -256,6 +256,78 @@ pub fn handle_object_navigation_events(
             navigation_grid.world_to_grid(player_transform.translation, tile_size.0);
 
         if let Some(object_position) = match event.object_name.as_ref() {
+            "bed" => {
+                let beds = q_objects.p0();
+                let transforms: Vec<Vec3> = beds
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "kitchen" => {
+                let kitchens = q_objects.p1();
+                let transforms: Vec<Vec3> = kitchens
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "computer" => {
+                let computerdesks = q_objects.p2();
+                let transforms: Vec<Vec3> = computerdesks
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "fridge" => {
+                let kitchens = q_objects.p1();
+                let transforms: Vec<Vec3> = kitchens
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "phone" => {
+                let phones = q_objects.p5();
+                let transforms: Vec<Vec3> = phones
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "bathroom" => {
+                let sinks = q_objects.p3();
+                let transforms: Vec<Vec3> = sinks
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "tv" => {
+                let gameconsoles = q_objects.p4();
+                let transforms: Vec<Vec3> = gameconsoles
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
+            "gameconsole" => {
+                let gameconsoles = q_objects.p4();
+                let transforms: Vec<Vec3> = gameconsoles
+                    .iter()
+                    .map(|(_, transform, _)| transform.translation)
+                    .collect();
+                let mean_translation = transforms.iter().sum::<Vec3>() / transforms.len() as f32;
+                Some(mean_translation)
+            }
             _ => None,
         } {
             if let Some(target_grid_pos) = find_nearest_walkable_tile(

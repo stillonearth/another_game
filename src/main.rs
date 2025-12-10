@@ -87,17 +87,16 @@ fn startup_game(
     asset_server: Res<AssetServer>,
     mut q_cameras: Query<(Entity, &mut Camera, &Camera2d)>,
 ) {
+    let map_handle: Handle<TiledMapAsset> = asset_server.load("my_room.tmx");
 
-    println!("start game");
-
-    let map_handle: Handle<TiledMapAsset> = asset_server.load("sk.tmx");
     commands
-        .spawn((TiledMap(map_handle),  TilemapAnchor::Center))
+        .spawn((TiledMap(map_handle), TilemapAnchor::Center))
         .observe(
             |_: On<TiledEvent<MapCreated>>,
              commands: Commands,
              asset_server: Res<AssetServer>,
              texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>| {
+                println!("map created");
                 player::spawn_player_sprite(commands, asset_server, texture_atlas_layouts);
             },
         )
@@ -160,18 +159,14 @@ fn main() {
         .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
-                .set(WindowPlugin {
-                    ..default()
-                }),
+                .set(WindowPlugin { ..default() }),
             MeshPickingPlugin,
             LaMesaPlugin::<GameCard>::default(),
             game_objects::GameObjectsPlugin,
             TiledPlugin::default(),
             // TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
             // PhysicsPlugins::default().with_length_unit(100.0),
-            EguiPlugin {
-                ..default()
-            },
+            EguiPlugin { ..default() },
             WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::Escape)),
             navigation::NavigationGridPlugin {},
             AsyncPlugin::default_settings(),
