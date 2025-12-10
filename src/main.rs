@@ -1,208 +1,211 @@
-// This example has a tutorial in the bevy_ecs_ldtk book associated with it:
-// <https://trouv.github.io/bevy_ecs_ldtk/latest/tutorials/tile-based-game/index.html>
+use std::f32::consts::FRAC_PI_2;
+
+use avian2d::prelude::*;
 use bevy::{input::common_conditions::input_toggle_active, prelude::*};
-use bevy_ecs_ldtk::prelude::*;
+use bevy_common_assets::json::JsonAssetPlugin;
+use bevy_defer::AsyncPlugin;
+use bevy_ecs_tiled::prelude::*;
+use bevy_hui::HuiPlugin;
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
-use bevy_kira_audio::AudioPlugin;
-use bevy_novel::{messages::EventStartScenario, rpy_asset_loader::Rpy, NovelPlugin};
-use std::collections::HashSet;
+use bevy_kira_audio::prelude::*;
+use bevy_la_mesa::{LaMesaPlugin, LaMesaPluginSettings};
+use bevy_novel::{NovelBackground, NovelImage, NovelPlugin, NovelText};
+
+use crate::{
+    cards::{
+        ActivityCards, ActivityCardsHandle, CardSystemPlugin, GameCard, SchizophrenicCards,
+        SchizophrenicCardsHandle,
+    },
+    cutscene::CutscenePlugin,
+    cutscene_menu::GameMenuPlugin,
+    endgame::{EndGamePlugin, EndGameScenarios, EndGameScenariosHandle},
+    logic::{CutsceneEndEvent, CutsceneStartEvent, GameLogicPlugin},
+    main_menu::MainMenuPlugin,
+    player::PlayerPlugin,
+    splashscreen::SplashscreenPlugin,
+    ui::GameUIPlugin,
+};
+
+mod cards;
+mod cutscene;
+mod cutscene_menu;
+mod endgame;
+mod game_objects;
+mod logic;
+mod main_menu;
+mod navigation;
+mod player;
+mod splashscreen;
+mod sprites;
+mod ui;
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+enum AppState {
+    #[default]
+    Splashscreen,
+    MainMenu,
+    Game,
+}
+
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        Camera2d,
+        IsDefaultUiCamera,
+        Camera {
+            order: 2,
+            ..default()
+        },
+    ));
+
+    commands.spawn((
+        Name::new("Camera 3d"),
+        Camera3d::default(),
+        Camera {
+            order: 1,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 25.0, 0.0)
+            .looking_at(Vec3::ZERO, Vec3::Y)
+            .with_rotation(Quat::from_rotation_z(0.0))
+            .with_rotation(Quat::from_rotation_x(-FRAC_PI_2)),
+        MeshPickingCamera,
+    ));
+
+    let activity_cards_handle = ActivityCardsHandle(asset_server.load("cards.json"));
+    commands.insert_resource(activity_cards_handle);
+
+    let schizphrenic_cards_handle =
+        SchizophrenicCardsHandle(asset_server.load("schizophrenic-cards.json"));
+    commands.insert_resource(schizphrenic_cards_handle);
+
+    let endgame_scenarios_handle = EndGameScenariosHandle(asset_server.load("endgame.json"));
+    commands.insert_resource(endgame_scenarios_handle);
+}
+
+fn startup_game(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut q_cameras: Query<(Entity, &mut Camera, &Camera2d)>,
+) {
+
+    println!("start game");
+
+    let map_handle: Handle<TiledMapAsset> = asset_server.load("sk.tmx");
+    commands
+        .spawn((TiledMap(map_handle),  TilemapAnchor::Center))
+        .observe(
+            |_: On<TiledEvent<MapCreated>>,
+             commands: Commands,
+             asset_server: Res<AssetServer>,
+             texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>| {
+                player::spawn_player_sprite(commands, asset_server, texture_atlas_layouts);
+            },
+        )
+        .observe(
+            |trigger: On<TiledEvent<ColliderCreated>>, mut commands: Commands| {
+                commands.entity(trigger.entity).insert((RigidBody::Static,));
+            },
+        );
+
+    // for (_, mut camera, _) in q_cameras.iter_mut() {
+    //     camera.order = 0;
+    // }
+}
+
+// fn handle_cutscene_start(
+//     mut commands: Commands,
+//     mut er_cutscene_start: EventReader<CutsceneStartEvent>,
+//     q_tiled_map_markers: Query<(Entity, &TiledMapMarker)>,
+// ) {
+//     for _ in er_cutscene_start.read() {
+//         for (entity, _) in q_tiled_map_markers.iter() {
+//             commands.entity(entity).insert(Visibility::Hidden);
+//         }
+//     }
+// }
+
+// fn handle_cutscene_end(
+//     mut commands: Commands,
+//     mut er_cutscene_end: EventReader<CutsceneEndEvent>,
+//     q_tiled_map_markers: Query<(Entity, &TilemapMarker)>,
+//     mut q_novel_ui: ParamSet<(
+//         Query<(Entity, &mut Visibility, &NovelText)>,
+//         Query<(Entity, &mut Visibility, &NovelBackground)>,
+//         Query<(Entity, &mut Visibility, &NovelImage)>,
+//     )>,
+// ) {
+//     for _ in er_cutscene_end.read() {
+//         for (entity, _) in q_tiled_map_markers.iter() {
+//             commands.entity(entity).insert(Visibility::Inherited);
+//         }
+//         for (_, mut visibility, _) in q_novel_ui.p0().iter_mut() {
+//             *visibility = Visibility::Hidden;
+//         }
+//         for (_, mut visibility, _) in q_novel_ui.p1().iter_mut() {
+//             *visibility = Visibility::Hidden;
+//         }
+//         for (_, mut visibility, _) in q_novel_ui.p2().iter_mut() {
+//             *visibility = Visibility::Hidden;
+//         }
+//     }
+// }
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins(LdtkPlugin)
-        .add_plugins(AudioPlugin)
-        .add_plugins(NovelPlugin {})
+        .insert_resource(LaMesaPluginSettings { num_players: 1 })
+        .insert_resource(MeshPickingSettings {
+            require_markers: true,
+            ray_cast_visibility: RayCastVisibility::Visible,
+        })
         .add_plugins((
-            EguiPlugin { ..default() },
-            WorldInspectorPlugin::new().run_if(input_toggle_active(false, KeyCode::Escape)),
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    ..default()
+                }),
+            MeshPickingPlugin,
+            LaMesaPlugin::<GameCard>::default(),
+            game_objects::GameObjectsPlugin,
+            TiledPlugin::default(),
+            // TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default(),
+            // PhysicsPlugins::default().with_length_unit(100.0),
+            EguiPlugin {
+                ..default()
+            },
+            WorldInspectorPlugin::default().run_if(input_toggle_active(false, KeyCode::Escape)),
+            navigation::NavigationGridPlugin {},
+            AsyncPlugin::default_settings(),
+            // LLMPlugin,
+            HuiPlugin,
+            NovelPlugin {},
         ))
-        .add_systems(Startup, setup)
-        .insert_resource(LevelSelection::index(0))
-        .register_ldtk_entity::<PlayerBundle>("Player")
-        .register_ldtk_entity::<GoalBundle>("Goal")
-        .add_systems(Startup, load_scenario)
+        .add_plugins((
+            JsonAssetPlugin::<ActivityCards>::new(&["json"]),
+            JsonAssetPlugin::<SchizophrenicCards>::new(&["json"]),
+            JsonAssetPlugin::<EndGameScenarios>::new(&["json"]),
+            AudioPlugin,
+            CutscenePlugin,
+            CardSystemPlugin,
+            GameLogicPlugin,
+            GameUIPlugin,
+            PlayerPlugin,
+            GameMenuPlugin,
+            MainMenuPlugin,
+            EndGamePlugin,
+            SplashscreenPlugin,
+        ))
+        .add_systems(Startup, startup)
+        .add_systems(OnEnter(AppState::Game), startup_game)
         .add_systems(
             Update,
             (
-                move_player_from_input,
-                translate_grid_coords_entities,
-                cache_wall_locations,
-                check_goal,
+                sprites::animate_sprite,
+                sprites::update_animation_indices,
+                // handle_cutscene_start,
+                // handle_cutscene_end,
             ),
         )
-        .register_ldtk_int_cell::<WallBundle>(1)
-        .init_resource::<LevelWalls>()
+        .init_state::<AppState>()
+        .init_asset::<bevy_ecs_tiled::tiled::map::asset::TiledMapAsset>()
         .run();
 }
-
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((
-        Camera2d,
-        Projection::Orthographic(OrthographicProjection {
-            scale: 0.5,
-            ..OrthographicProjection::default_2d()
-        }),
-        Transform::from_xyz(1280.0 / 4.0, 720.0 / 4.0, 0.0),
-    ));
-
-    commands.spawn(LdtkWorldBundle {
-        ldtk_handle: asset_server.load("tile-based-game.ldtk").into(),
-        ..Default::default()
-    });
-}
-
-#[derive(Default, Component)]
-struct Player;
-
-#[derive(Default, Bundle, LdtkEntity)]
-struct PlayerBundle {
-    player: Player,
-    #[sprite_sheet]
-    sprite_sheet: Sprite,
-    #[grid_coords]
-    grid_coords: GridCoords,
-}
-
-#[derive(Default, Component)]
-struct Goal;
-
-#[derive(Default, Bundle, LdtkEntity)]
-struct GoalBundle {
-    goal: Goal,
-    #[sprite_sheet]
-    sprite_sheet: Sprite,
-    #[grid_coords]
-    grid_coords: GridCoords,
-}
-
-#[derive(Default, Component)]
-struct Wall;
-
-#[derive(Default, Bundle, LdtkIntCell)]
-struct WallBundle {
-    wall: Wall,
-}
-
-#[derive(Default, Resource)]
-struct LevelWalls {
-    wall_locations: HashSet<GridCoords>,
-    level_width: i32,
-    level_height: i32,
-}
-
-impl LevelWalls {
-    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
-        grid_coords.x < 0
-            || grid_coords.y < 0
-            || grid_coords.x >= self.level_width
-            || grid_coords.y >= self.level_height
-            || self.wall_locations.contains(grid_coords)
-    }
-}
-
-fn move_player_from_input(
-    mut players: Query<&mut GridCoords, With<Player>>,
-    input: Res<ButtonInput<KeyCode>>,
-    level_walls: Res<LevelWalls>,
-) {
-    let movement_direction = if input.just_pressed(KeyCode::KeyW) {
-        GridCoords::new(0, 1)
-    } else if input.just_pressed(KeyCode::KeyA) {
-        GridCoords::new(-1, 0)
-    } else if input.just_pressed(KeyCode::KeyS) {
-        GridCoords::new(0, -1)
-    } else if input.just_pressed(KeyCode::KeyD) {
-        GridCoords::new(1, 0)
-    } else {
-        return;
-    };
-
-    for mut player_grid_coords in players.iter_mut() {
-        let destination = *player_grid_coords + movement_direction;
-        if !level_walls.in_wall(&destination) {
-            *player_grid_coords = destination;
-        }
-    }
-}
-
-const GRID_SIZE: i32 = 16;
-
-fn translate_grid_coords_entities(
-    mut grid_coords_entities: Query<(&mut Transform, &GridCoords), Changed<GridCoords>>,
-) {
-    for (mut transform, grid_coords) in grid_coords_entities.iter_mut() {
-        transform.translation =
-            bevy_ecs_ldtk::utils::grid_coords_to_translation(*grid_coords, IVec2::splat(GRID_SIZE))
-                .extend(transform.translation.z);
-    }
-}
-
-fn cache_wall_locations(
-    mut level_walls: ResMut<LevelWalls>,
-    mut level_messages: MessageReader<LevelEvent>,
-    walls: Query<&GridCoords, With<Wall>>,
-    ldtk_project_entities: Query<&LdtkProjectHandle>,
-    ldtk_project_assets: Res<Assets<LdtkProject>>,
-) -> Result {
-    for level_event in level_messages.read() {
-        if let LevelEvent::Spawned(level_iid) = level_event {
-            let ldtk_project = ldtk_project_assets
-                .get(ldtk_project_entities.single()?)
-                .expect("LdtkProject should be loaded when level is spawned");
-            let level = ldtk_project
-                .get_raw_level_by_iid(level_iid.get())
-                .expect("spawned level should exist in project");
-
-            let wall_locations = walls.iter().copied().collect();
-
-            let new_level_walls = LevelWalls {
-                wall_locations,
-                level_width: level.px_wid / GRID_SIZE,
-                level_height: level.px_hei / GRID_SIZE,
-            };
-
-            *level_walls = new_level_walls;
-        }
-    }
-    Ok(())
-}
-
-fn check_goal(
-    level_selection: ResMut<LevelSelection>,
-    players: Query<&GridCoords, (With<Player>, Changed<GridCoords>)>,
-    goals: Query<&GridCoords, With<Goal>>,
-    mut levels: Query<(&LevelSet, &mut Visibility)>,
-    mut ew_start_scenario: MessageWriter<EventStartScenario>,
-    scenario: Res<ScenarioHandle>,
-    rpy_assets: Res<Assets<Rpy>>,
-) {
-    if players
-        .iter()
-        .zip(goals.iter())
-        .any(|(player_grid_coords, goal_grid_coords)| player_grid_coords == goal_grid_coords)
-    {
-        let indices = match level_selection.into_inner() {
-            LevelSelection::Indices(indices) => indices,
-            _ => panic!("level selection should always be Indices in this game"),
-        };
-
-        if let Some(rpy) = rpy_assets.get(scenario.id()) {
-            ew_start_scenario.write(EventStartScenario { ast: rpy.0.clone() });
-        }
-
-        for (_, mut visibility) in levels.iter_mut() {
-            *visibility = Visibility::Hidden;
-        }
-
-        indices.level += 1;
-    }
-}
-
-fn load_scenario(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let scenario_handle = ScenarioHandle(asset_server.load("script.rpy"));
-    commands.insert_resource(scenario_handle);
-}
-
-#[derive(Resource, Deref, DerefMut)]
-struct ScenarioHandle(Handle<Rpy>);
